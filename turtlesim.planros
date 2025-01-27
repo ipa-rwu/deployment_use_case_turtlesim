@@ -9,6 +9,6 @@ DeploymentPlanWithRos:
       middleware: humble
       softwareComponents:
         - turtlesim_system
-      runtimeType:
-        type: container
+      runtimeType: 
+        type: container 
         registry: "iparwu"
