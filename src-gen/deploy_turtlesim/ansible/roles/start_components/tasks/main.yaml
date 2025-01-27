@@ -1,0 +1,54 @@
+- name: Make sure docker-compose file is present
+  ansible.builtin.stat:
+    path: "{{ ori_docker_compose_dir_path }}/{{ item }}"
+  loop:
+    - cyclonedds.xml
+    - docker-compose.yaml
+
+- name: Make sure destination dir exists
+  become: true
+  file:
+    path: "{{ dest_docker_compose_dir_path }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+
+- name: Copy compose files
+  ansible.builtin.copy:
+    src: "{{ ori_docker_compose_dir_path }}/{{ item }}"
+    dest: "{{ dest_docker_compose_dir_path }}/{{ item }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0644"
+  loop:
+    - cyclonedds.xml
+    - docker-compose.yaml
+
+- name: Tear down existing "turtlesim" service
+  community.general.docker_compose:
+    project_src: "{{ dest_docker_compose_dir_path }}"
+    stopped: true
+    state: present
+    services:
+      - turtlesim
+  tags:
+    - stop_service
+    - turtlesim
+    - my_pc
+  register: output
+
+- name: Create and start "turtlesim" service
+  community.general.docker_compose:
+    project_src: "{{ dest_docker_compose_dir_path }}"
+    pull: true
+    services:
+      - turtlesim
+  tags:
+    - start_service
+    - turtlesim
+    - my_pc
+  register: output
+
+- name: Debug output
+  ansible.builtin.debug:
+    var: output

@@ -1,0 +1,20 @@
+version: "3"
+
+services:
+  turtlesim:
+    image: iparwu/turtlesim_humble:v1.0.0
+    build:
+      context: "./turtlesim/"
+      dockerfile: Dockerfile
+      args:
+        ROS_DISTRO: humble
+        BASE_IMAGE: public.ecr.aws/docker/library/ros:humble-ros-core
+        CMAKE_ARGS: "-DCMAKE_BUILD_TYPE=Release"
+        BUILDER_SUFFIX: ":0.0.3"
+        BUILDER_PREFIX: "ghcr.io/ipa-rwu/"
+        target: install
+        SELECT_PKGS: ""
+        COLCON_OPTION: ""
+    stdin_open: true
+    tty: true
+

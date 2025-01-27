@@ -1,0 +1,14 @@
+DeploymentPlanWithRos:
+  name: deploy_turtlesim
+  targetRossystem: turtlesim_system
+  deployTo: turtlesim_env
+  assignment:
+    - name: turtlesim
+      executedBy: "turtlesim_env.my_pc"
+      version: "v1.0.0"
+      middleware: humble
+      softwareComponents:
+        - turtlesim_system
+      runtimeType:
+        type: container
+        registry: "iparwu"

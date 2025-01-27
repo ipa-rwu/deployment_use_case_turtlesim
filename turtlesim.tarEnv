@@ -1,0 +1,16 @@
+TargetDeployEnviroment:
+  name: turtlesim_env # name of this target environment"
+  includeDevice:
+    computationDevice:
+      - name: "my_pc"
+        refDeviceType: PC # note: it references to a computation device type from the device catalog, you can change it if you create your owns
+        configDeviceProperty:
+          - name: "os_name"
+            from: "PC.operting_system.os_name"
+            value: ubuntu # note: only support ubuntu so far
+          - name: "os_version"
+            from: "PC.operting_system.os_version"
+            value: jammy # ubuntu version
+          - name: "processor_architecture"
+            from: "PC.processor.processor_architecture"
+            value: x86

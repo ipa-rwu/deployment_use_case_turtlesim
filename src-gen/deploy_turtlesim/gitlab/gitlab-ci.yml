@@ -1,0 +1,100 @@
+include:
+  - local: src-gen/deploy_turtlesim/gitlab/ci/gitlab_templates/JOB_TEMPLATE.yml
+  - local: src-gen/deploy_turtlesim/gitlab/ci/gitlab_templates/RULES.yml
+
+variables:
+  ROSINSTALL_CI_JOB_TOKEN: "true"
+
+.common:
+  tags: &kaniko_runner
+    - todo
+
+turtlesim:
+  tags: *kaniko_runner
+  stage: build
+  before_script:
+    # use "export" to overide global variables
+    - export BASE_IMAGE_PREFIX="public.ecr.aws/docker/library/ros"
+    - export BASE_IMAGE_SUFFIX="humble-ros-core"
+    - echo BASE_IMAGE_PREFIX=${BASE_IMAGE_PREFIX}
+    - echo BASE_IMAGE_SUFFIX=${BASE_IMAGE_SUFFIX}
+    - echo "IMAGE_NAME=${IMAGE_NAME}"
+    - !reference [.common, setup_image_tag_script]
+    - !reference [.common, setup_base_image_script]
+    - echo "DOCKERFILE_FOLDER=${DOCKERFILE_FOLDER}"
+    - echo "DOCKERFILE_NAME=${DOCKERFILE_NAME}"
+    - echo "SELECT_PKGS=${SELECT_PKGS}"
+    - echo "CMAKE_ARGS=${CMAKE_ARGS}"
+    - echo "COLCON_OPTION=${COLCON_OPTION}"
+    - export BUILDER_SUFFIX=$BUILDER_SUFFIX
+    - export STAGE=$STAGE
+  extends:
+    - .build_with_kaniko
+    - .on_always
+  variables:
+    IMAGE_NAME: "turtlesim_humble"
+    DOCKERFILE_FOLDER: "src-gen/deploy_turtlesim/turtlesim/"
+    BASE_IMAGE_PREFIX: "public.ecr.aws/docker/library/ros"
+    BASE_IMAGE_SUFFIX: "humble-ros-core"
+    DOCKERFILE_NAME: Dockerfile
+    SELECT_PKGS: ""
+    COLCON_OPTION: ""
+    BUILDER_SUFFIX: ":0.0.3"
+  rules:
+    - !reference [.rules-map, on_commit_merge]
+
+publish_turtlesim:
+  tags: *kaniko_runner
+  stage: publish
+  before_script:
+      - !reference [.common, create_release_tag_script]
+  extends:
+    - .publish
+    # - .on_merge_tag
+  variables:
+    IMAGE_NAME: "turtlesim_humble"
+  rules:
+      - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG != null || $CI_COMMIT_BRANCH == $CUSTOME_DEFAULT_BRANCH
+        needs:
+          - turtlesim
+
+doc:
+  tags: *kaniko_runner
+  stage: doc
+  extends:
+    - .sphinxdoc
+    - .on_doc_change
+    - .on_merge_tag
+  variables:
+    DOC_PATH: "src-gen/deploy_turtlesim/doc/source"
+
+ansible_deploy:
+  tags:
+    - my_pc
+  stage: ansible_deploy
+  before_script:
+    - "command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client -y )"
+    - eval $(ssh-agent -s)
+    - chmod 400 "$SSH_PRIVATE_KEY_MY_PC"
+    - ssh-add "$SSH_PRIVATE_KEY_MY_PC"
+
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+
+    - apk add ansible -v
+  script:
+    - cd src-gen/deploy_turtlesim/ansible
+    - ansible-playbook -i inventory_ci.yaml --private-key "$SSH_PRIVATE_KEY_MY_PC" playbook_deploy_files.yaml
+  variables:
+    ANSIBLE_HOST_KEY_CHECKING: "False"
+  extends:
+    - .on_merge_tag
+  when: manual
+
+stages:
+  - ansible_deploy
+  - build
+  - publish
+  - doc

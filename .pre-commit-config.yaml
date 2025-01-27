@@ -1,0 +1,73 @@
+# To use:
+#
+#     pre-commit run -a
+#
+# Or:
+#
+#     pre-commit install  # (runs every time you commit in git)
+#
+# To update this file:
+#
+#     pre-commit autoupdate
+#
+# See https://github.com/pre-commit/pre-commit
+
+repos:
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.5
+    hooks:
+      - id: forbid-crlf
+      - id: remove-crlf
+      - id: forbid-tabs
+      - id: remove-tabs
+        args: [--whitespaces-count, "2"] # defaults to: 4
+        files: \.(mach|skill|agent|ros|ros2|rossystem|capa|agentin)$
+      - id: remove-tabs
+        args: [--whitespaces-count, "4"] # defaults to: 4
+        exclude: \.(mach|skill|agent|ros|ros2|rossystem|capa|agentin)$
+      - id: chmod
+        args: ["644"]
+        files: \.md$
+      - id: insert-license
+        files: \.groovy$
+        args:
+          - --license-filepath
+          - src/license_header.txt # defaults to: LICENSE.txt
+          - --comment-style
+          - // # defaults to:  #
+          - --use-current-year
+          - --no-extra-eol # see below
+
+  # Standard hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-yaml
+        args: ["--unsafe"]
+        files: \.(mach|skill|agent|ros|ros2|rossystem|capa)$
+        exclude: "ci/gitlab_templates/JOB_TEMPLATE.yml"
+      - id: debug-statements
+      - id: destroyed-symlinks
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: pretty-format-json
+      - id: trailing-whitespace
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.3.0
+    hooks:
+      - id: codespell
+        args:
+          [
+            "--write-changes",
+            "--ignore-words=.codespell_words",
+            '--skip="*.eps"',
+          ]
+        exclude: CHANGELOG.rsts
+

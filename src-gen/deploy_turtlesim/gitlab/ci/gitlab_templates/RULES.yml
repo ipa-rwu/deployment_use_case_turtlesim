@@ -1,0 +1,35 @@
+.on_always:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG != null
+
+.on_tag:
+  rules:
+    - if: $CI_COMMIT_TAG != null
+
+.on_merge_event:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_MERGE_REQUEST_ID
+
+.on_merge_tag:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_TAG != null
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+
+.on_doc_change:
+  rules:
+    - if: $CI_COMMIT_BRANCH
+      changes:
+        compare_to: "refs/heads/main" #so far, it doesn't allow to use variable here
+        paths:
+          - "${DOC_PATH}/*"

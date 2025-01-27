@@ -1,0 +1,25 @@
+- name: Make sure docker-compose file is present
+  ansible.builtin.stat:
+    path: "{{ ori_docker_compose_dir_path }}/{{ item }}"
+  loop:
+    - cyclonedds.xml
+    - docker-compose.yaml
+
+- name: Make sure destination dir exists
+  ansible.builtin.stat:
+    path: "{{ dest_docker_compose_dir_path }}"
+
+- name: Copy compose files
+  ansible.builtin.copy:
+    src: "{{ ori_docker_compose_dir_path }}/{{ item }}"
+    dest: "{{ dest_docker_compose_dir_path }}/{{ item }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0644"
+  loop:
+    - cyclonedds.xml
+    - docker-compose.yaml
+
+- name: Debug output
+  ansible.builtin.debug:
+    var: output

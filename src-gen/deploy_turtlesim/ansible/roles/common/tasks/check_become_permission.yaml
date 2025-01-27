@@ -1,0 +1,4 @@
+- name: check_become_permission
+  become: true
+  command: id -u
+  register: id_output

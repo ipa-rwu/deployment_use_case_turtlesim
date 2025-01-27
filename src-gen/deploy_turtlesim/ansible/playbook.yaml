@@ -1,0 +1,10 @@
+- name: deploy_turtlesim_my_pc
+  hosts: my_pc
+  vars:
+    docker_compose_dir: my_pc
+    ori_docker_compose_dir_path: "../{{ docker_compose_dir }}"
+    dest_docker_compose_dir_path: "/home/{{ ansible_user }}/AutoDeployment/deploy_turtlesim/{{ docker_compose_dir }}"
+    ansible_become_pass: "{{ my_pc_sudo }}"
+  roles:
+    - common
+    - start_application

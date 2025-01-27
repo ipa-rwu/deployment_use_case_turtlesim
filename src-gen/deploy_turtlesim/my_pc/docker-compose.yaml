@@ -1,0 +1,27 @@
+version: '3'
+networks:
+  ros-network:
+    external: false
+    driver: "bridge"
+
+services:
+  turtlesim:
+    image: iparwu/turtlesim_humble:v1.0.0
+    volumes:
+      - ./cyclonedds.xml:/cyclonedds.xml
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    networks:
+      - ros-network
+    environment:
+      - NETINTERFACE=eth0
+      - DISPLAY=${DISPLAY}
+      # for application
+    stdin_open: true # docker run -i
+    tty: true # docker run -t
+    command:
+      - bash
+      - -c
+      - |
+        export CYCLONEDDS_URI=file:///cyclonedds.xml
+        source /ros_entrypoint.sh
+        ros2 launch turtlesim_system turtlesim_system.launch.py

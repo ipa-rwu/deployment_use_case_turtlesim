@@ -1,0 +1,86 @@
+- name: Check If Docker Is Installed
+  command: docker --version
+  register: docker_valid
+  ignore_errors: true
+
+- name: Remove files
+  become: true
+  ansible.builtin.file:
+    state: absent
+    path: "{{ item }}"
+  with_items:
+    - /etc/apt/keyrings/docker.gpg
+    - /etc/apt/sources.list.d/docker.list
+    - /etc/apt/sources.list.d/download_docker_com_linux_ubuntu.list
+  when: docker_valid.failed
+
+- name: Install dependencies
+  apt:
+    name: "{{ packages }}"
+    state: present
+    update_cache: yes
+  vars:
+    packages:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - software-properties-common
+      - gnupg-agent
+  become: true
+  when: docker_valid.failed
+
+- name: Import PGP key
+  become: true
+  apt_key:
+    url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
+    state: present
+  when: docker_valid.failed
+
+- name: Add Docker repository
+  become: true
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/{{ ansible_system | lower }}/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+    state: present
+    update_cache: yes
+    mode: 0644
+    validate_certs: yes
+  when: docker_valid.failed
+
+- name: Install Docker-CE
+  become: true
+  apt:
+    name: "{{ item }}"
+    state: latest
+    autoclean: yes
+    cache_valid_time: 86400
+  loop:
+    - docker-ce
+    - docker-ce-cli
+    - containerd.io
+  when: docker_valid.failed
+
+- name: Ensure user is in Docker group
+  become: true
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: yes
+  when: docker_valid.failed
+
+- name: Ensure Docker dependensies are installed
+  ansible.builtin.pip:
+    name:
+      - docker
+      - docker-compose
+  when: docker_valid.failed
+
+- name: Install python3-docker
+  ansible.builtin.apt:
+    name: python3-docker
+    state: present
+
+- name: Ensure docker-compose are installed
+  ansible.builtin.pip:
+    name:
+      - docker-compose
+    state: present
